@@ -87,7 +87,7 @@ x86 平台上的输出符合逻辑，在遍历4次后找到了 parent.py 的栈�
 由于栈顶 frame 对象的 f_back 属性为 None，而该循环仅仅只是当 f_back 不为 None 时将 f 指向 f_back，并没有对 None 的情况跳出循环，导致每次循环都是该栈顶frame，以至于出现死循环现象
 同时也能观察到 x86 和 RISC-V 平台对 `super(RospyLogger, self).findCaller(*args, **kwargs)[:3]` 返回的文件名、行数和函数名存在不一的情况
 
-后来查阅 logging 模块变更日志发现 [此commit](https://github.com/python/cpython/pull/28287/files) 引入了上述问题，`logging` 本身的 `findCaller()` 方法也是用于寻找在调用 `log()` 和 `info()` 等日志函数时的调用者，其本身也会沿着堆栈向上查找最先不属于 `logging` 类的栈帧，但该 commit 修改了遍历逻辑，引入了 `_is_internal_frame()` 函数以判断当前栈帧是否为 `logging` 内部所有，而忽略了调用栈里可能有 `logging` 子类的情况
+后来查阅 Python 3.11 logging 模块变更日志发现 [此commit](https://github.com/python/cpython/pull/28287/files) 引入了上述问题，`logging` 本身的 `findCaller()` 方法也是用于寻找在调用 `log()` 和 `info()` 等日志函数时的调用者，其本身也会沿着堆栈向上查找最先不属于 `logging` 类的栈帧，但该 commit 修改了遍历逻辑，引入了 `_is_internal_frame()` 函数以判断当前栈帧是否为 `logging` 内部所有，而忽略了调用栈里可能有 `logging` 子类的情况
 
 这就导致，原本的逻辑下，`logging` 本身的 `findCaller()` 寻找到自身和 `RospyLogger` 的方法都会跳过，最后返回 `parent.py` 这个外部函数所在的文件，但新逻辑下，在跳过 `logging.py` 的 `findCaller()` 后，下一个 `roslogging.py` 的 `findCaller()` 已被判定为外部函数而返回，进而导致上述死循环的产生
 
