@@ -103,8 +103,6 @@ ROS 原本的逻辑极具依赖 Python 自身 `logging` 对 `findCaller()` 的�
         Find the stack frame of the caller so that we can note the source
         file name, line number, and function name with class name if possible.
         """
-        file_name, lineno, func_name = super(RospyLogger, self).findCaller(*args, **kwargs)[:3]
-        file_name = os.path.normcase(file_name)
 
         f = inspect.currentframe()
         while f.f_back:
